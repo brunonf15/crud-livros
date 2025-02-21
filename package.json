@@ -1,14 +1,14 @@
 {
   "name": "crud-livros",
-  "version": "1.0.0",
-  "main": "index.js",
+  "version": "2.0.0",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Bruno Figueiredo - Mestre QA",
   "license": "ISC",
-  "description": "",
+  "description": "Projeto simples para demonstrar testes de API utilizando Node.js e um front-end em HTML, CSS e JavaScript para interagir com a API. A API permite realizar operações de criação, leitura, atualização e deleção de livros, e conta com documentação via Swagger.",
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.21.1",

@@ -1,7 +1,6 @@
 # CRUD de Livros
 
-Projeto simples para demonstrar testes de API utilizando Node.js e um front-end em HTML, CSS e JavaScript para interagir com a API.  
-A API permite realizar operações de **criação**, **leitura**, **atualização** e **deleção** de livros, e conta com documentação via Swagger.
+Projeto simples para demonstrar testes de API utilizando Node.js e um front-end em HTML, CSS e JavaScript para interagir com a API. Agora a aplicação é servida por meio de um servidor Express, garantindo um ambiente HTTP adequado para consumo correto dos recursos e para a realização de testes.
 
 ## Funcionalidades
 
@@ -24,6 +23,11 @@ A API permite realizar operações de **criação**, **leitura**, **atualizaçã
 
 1. **Clone o repositório:**
 
+   ```bash
+   git clone <https://github.com/brunonf15/crud-livros.git>
+   cd <crud-livros>
+   ```
+
 2. **Instale as dependências:**
 
    ```bash
@@ -40,24 +44,28 @@ A API permite realizar operações de **criação**, **leitura**, **atualizaçã
 
 4. **Acessando a Aplicação:**
 
+
+   - **Documentação Swagger:** Disponível em [http://localhost:3000/api-docs](http://localhost:3000/api-docs).
    - **API:** Acesse os endpoints via `http://localhost:3000`.
-   - **Documentação Swagger:** Disponível em `http://localhost:3000/api-docs`.
-   - **Front-end:** Abra o arquivo `index.html` no seu navegador.
+   - **Front-end:** A aplicação é servida via Express; acesse [http://localhost:3000/index.html](http://localhost:3000/index.html) para visualizar a interface.
 
 ## Estrutura do Projeto
 
 ```
-├── index.html      # Interface do front-end
-├── app.js          # Lógica do front-end para consumir a API
-├── server.js       # API REST em Node.js com endpoints de CRUD e configuração do Swagger
-└── README.md       # Este arquivo
+crud-livros/
+├── package.json        # Configurações e scripts do projeto
+├── server.js           # API REST em Node.js - e documentação em Swagger
+└── public/             # Arquivos estáticos (HTML, CSS e JavaScript)
+    ├── index.html      # Interface do front-end
+    └── app.js          # Lógica do front-end para consumir a API
 ```
 
 ## Uso
 
-- **Adicionar Livro:** Preencha os campos do formulário "Adicionar Livro" e clique em **Adicionar**.
+- **Adicionar Livro:** Preencha os campos do formulário "Adicionar Livro" e clique em **Adicionar**.  
+  A ação enviará uma requisição POST para criar um novo livro na API.
 - **Listar Livros:** Clique no botão **Listar Todos os Livros** para ver a lista de livros cadastrados.
-- **Buscar Livro por ID:** Insira o ID desejado e clique em **Buscar** para exibir os dados do livro.
+- **Buscar Livro por ID:** Insira o ID desejado e clique em **Buscar** para exibir os dados do livro correspondente.
 
 ## Documentação da API
 
