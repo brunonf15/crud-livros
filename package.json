@@ -1,18 +1,15 @@
 {
-  "name": "crud-livros",
-  "version": "2.0.0",
+  "name": "crud-carros",
+  "version": "1.0.0",
+  "description": "API CRUD para gerenciamento de carros",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
-  "keywords": [],
-  "author": "Bruno Figueiredo - Mestre QA",
-  "license": "ISC",
-  "description": "Projeto simples para demonstrar testes de API utilizando Node.js e um front-end em HTML, CSS e JavaScript para interagir com a API. A API permite realizar operações de criação, leitura, atualização e deleção de livros, e conta com documentação via Swagger.",
   "dependencies": {
+    "express": "^4.18.2",
     "cors": "^2.8.5",
-    "express": "^4.21.1",
-    "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.0",
+    "swagger-jsdoc": "^6.2.8"
   }
 }

@@ -1,210 +1,132 @@
-// server.js
 const express = require('express');
 const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
-const path = require('path');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = 3001; // Porta diferente da API de livros
 
+// Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));
 
-// Servir arquivos estáticos da pasta "public"
-app.use(express.static(path.join(__dirname, 'public')));
+// Array para armazenar os carros (simula banco de dados)
+let carros = [
+  { id: 1, marca: 'Toyota', modelo: 'Corolla', ano: 2023, cor: 'Prata', preco: 25000 },
+  { id: 2, marca: 'Honda', modelo: 'Civic', ano: 2022, cor: 'Preto', preco: 23000 }
+];
 
-// Configurações do Swagger
+let proximoId = 3;
+
+// Configuração do Swagger
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'API de Livros',
+      title: 'API de Carros',
       version: '1.0.0',
-      description: 'Uma API simples para gerenciar livros',
+      description: 'API simples para gerenciar carros'
     },
     servers: [
       {
-        url: `http://localhost:${port}`,
-      },
-    ],
+        url: `http://localhost:${PORT}`
+      }
+    ]
   },
-  apis: ['./server.js'], // Caminho para os arquivos que contêm as anotações do Swagger
+  apis: ['./server.js']
 };
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-let livros = [];
-let idAtual = 1;
-
 /**
  * @swagger
  * components:
  *   schemas:
- *     Livro:
+ *     Carro:
  *       type: object
  *       required:
- *         - id
- *         - nome
- *         - autor
- *         - paginas
+ *         - marca
+ *         - modelo
+ *         - ano
+ *         - cor
+ *         - preco
  *       properties:
  *         id:
  *           type: integer
- *           description: ID do livro
- *         nome:
+ *           description: ID gerado automaticamente
+ *         marca:
  *           type: string
- *           description: Nome do livro
- *         autor:
+ *           description: Marca do carro
+ *         modelo:
  *           type: string
- *           description: Autor do livro
- *         paginas:
+ *           description: Modelo do carro
+ *         ano:
  *           type: integer
- *           description: Número de páginas do livro
- *       example:
- *         id: 1
- *         nome: "O Alquimista"
- *         autor: "Paulo Coelho"
- *         paginas: 208
+ *           description: Ano de fabricação
+ *         cor:
+ *           type: string
+ *           description: Cor do carro
+ *         preco:
+ *           type: number
+ *           description: Preço do carro
  */
 
 /**
  * @swagger
- * tags:
- *   name: Livros
- *   description: API para gerenciamento de livros
- */
-
-/**
- * @swagger
- * /livros:
- *   post:
- *     summary: Cria um novo livro
- *     tags: [Livros]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - nome
- *               - autor
- *               - paginas
- *             properties:
- *               nome:
- *                 type: string
- *               autor:
- *                 type: string
- *               paginas:
- *                 type: integer
- *             example:
- *               nome: "O Alquimista"
- *               autor: "Paulo Coelho"
- *               paginas: 208
- *     responses:
- *       201:
- *         description: Livro criado com sucesso
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Livro'
- *       400:
- *         description: Dados inválidos
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 mensagem:
- *                   type: string
- *                   example: "Todos os campos são obrigatórios"
- */
-app.post('/livros', (req, res) => {
-  const { nome, autor, paginas } = req.body;
-  if (!nome || !autor || !paginas) {
-    return res.status(400).json({ mensagem: 'Todos os campos são obrigatórios' });
-  }
-  const novoLivro = { id: idAtual++, nome, autor, paginas };
-  livros.push(novoLivro);
-  res.status(201).json(novoLivro);
-});
-
-/**
- * @swagger
- * /livros:
+ * /carros:
  *   get:
- *     summary: Lista todos os livros
- *     tags: [Livros]
+ *     summary: Retorna a lista de todos os carros
  *     responses:
  *       200:
- *         description: Lista de livros
+ *         description: Lista de carros
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/Livro'
+ *                 $ref: '#/components/schemas/Carro'
  */
-app.get('/livros', (req, res) => {
-  res.json(livros);
+app.get('/carros', (req, res) => {
+  res.json(carros);
 });
 
 /**
  * @swagger
- * /livros/{id}:
+ * /carros/{id}:
  *   get:
- *     summary: Obter um livro pelo ID
- *     tags: [Livros]
+ *     summary: Retorna um carro específico pelo ID
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: ID do livro
  *         schema:
  *           type: integer
+ *         description: ID do carro
  *     responses:
  *       200:
- *         description: Dados do livro
+ *         description: Dados do carro
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Livro'
+ *               $ref: '#/components/schemas/Carro'
  *       404:
- *         description: Livro não encontrado
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 mensagem:
- *                   type: string
- *                   example: "Livro não encontrado"
+ *         description: Carro não encontrado
  */
-app.get('/livros/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const livro = livros.find((l) => l.id === id);
-  if (livro) {
-    res.json(livro);
-  } else {
-    res.status(404).json({ mensagem: 'Livro não encontrado' });
+app.get('/carros/:id', (req, res) => {
+  const carro = carros.find(c => c.id === parseInt(req.params.id));
+  if (!carro) {
+    return res.status(404).json({ mensagem: 'Carro não encontrado' });
   }
+  res.json(carro);
 });
 
 /**
  * @swagger
- * /livros/{id}:
- *   put:
- *     summary: Atualiza um livro pelo ID
- *     tags: [Livros]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         description: ID do livro
- *         schema:
- *           type: integer
+ * /carros:
+ *   post:
+ *     summary: Adiciona um novo carro
  *     requestBody:
  *       required: true
  *       content:
@@ -212,87 +134,101 @@ app.get('/livros/:id', (req, res) => {
  *           schema:
  *             type: object
  *             properties:
- *               nome:
+ *               marca:
  *                 type: string
- *               autor:
+ *               modelo:
  *                 type: string
- *               paginas:
+ *               ano:
  *                 type: integer
- *             example:
- *               nome: "Novo Nome"
- *               autor: "Novo Autor"
- *               paginas: 300
+ *               cor:
+ *                 type: string
+ *               preco:
+ *                 type: number
  *     responses:
- *       200:
- *         description: Livro atualizado com sucesso
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Livro'
- *       404:
- *         description: Livro não encontrado
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 mensagem:
- *                   type: string
- *                   example: "Livro não encontrado"
+ *       201:
+ *         description: Carro criado com sucesso
  */
-app.put('/livros/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const { nome, autor, paginas } = req.body;
-  const livro = livros.find((l) => l.id === id);
-  if (livro) {
-    livro.nome = nome || livro.nome;
-    livro.autor = autor || livro.autor;
-    livro.paginas = paginas || livro.paginas;
-    res.json(livro);
-  } else {
-    res.status(404).json({ mensagem: 'Livro não encontrado' });
-  }
+app.post('/carros', (req, res) => {
+  const { marca, modelo, ano, cor, preco } = req.body;
+  const novoCarro = {
+    id: proximoId++,
+    marca,
+    modelo,
+    ano: parseInt(ano),
+    cor,
+    preco: parseFloat(preco)
+  };
+  carros.push(novoCarro);
+  res.status(201).json(novoCarro);
 });
 
 /**
  * @swagger
- * /livros/{id}:
- *   delete:
- *     summary: Deleta um livro pelo ID
- *     tags: [Livros]
+ * /carros/{id}:
+ *   put:
+ *     summary: Atualiza um carro existente
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: ID do livro
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Carro'
+ *     responses:
+ *       200:
+ *         description: Carro atualizado com sucesso
+ *       404:
+ *         description: Carro não encontrado
+ */
+app.put('/carros/:id', (req, res) => {
+  const carro = carros.find(c => c.id === parseInt(req.params.id));
+  if (!carro) {
+    return res.status(404).json({ mensagem: 'Carro não encontrado' });
+  }
+  
+  const { marca, modelo, ano, cor, preco } = req.body;
+  carro.marca = marca;
+  carro.modelo = modelo;
+  carro.ano = parseInt(ano);
+  carro.cor = cor;
+  carro.preco = parseFloat(preco);
+  
+  res.json(carro);
+});
+
+/**
+ * @swagger
+ * /carros/{id}:
+ *   delete:
+ *     summary: Remove um carro
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
  *         schema:
  *           type: integer
  *     responses:
- *       204:
- *         description: Livro deletado com sucesso
+ *       200:
+ *         description: Carro removido com sucesso
  *       404:
- *         description: Livro não encontrado
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 mensagem:
- *                   type: string
- *                   example: "Livro não encontrado"
+ *         description: Carro não encontrado
  */
-app.delete('/livros/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const indice = livros.findIndex((l) => l.id === id);
-  if (indice !== -1) {
-    livros.splice(indice, 1);
-    res.status(204).send();
-  } else {
-    res.status(404).json({ mensagem: 'Livro não encontrado' });
+app.delete('/carros/:id', (req, res) => {
+  const index = carros.findIndex(c => c.id === parseInt(req.params.id));
+  if (index === -1) {
+    return res.status(404).json({ mensagem: 'Carro não encontrado' });
   }
+  
+  carros.splice(index, 1);
+  res.json({ mensagem: 'Carro removido com sucesso' });
 });
 
-app.listen(port, () => {
-  console.log(`Servidor rodando em http://localhost:${port}`);
-  console.log(`Documentação disponível em http://localhost:${port}/api-docs`);
+app.listen(PORT, () => {
+  console.log(`Servidor rodando em http://localhost:${PORT}`);
+  console.log(`Documentação Swagger: http://localhost:${PORT}/api-docs`);
 });

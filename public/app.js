@@ -1,54 +1,64 @@
-//app.js
 const formAdicionar = document.getElementById('form-adicionar');
-const listaLivros = document.getElementById('lista-livros');
+const listaCarros = document.getElementById('lista-carros');
 const btnListar = document.getElementById('btn-listar');
 const btnBuscar = document.getElementById('btn-buscar');
 const idBuscar = document.getElementById('id-buscar');
-const livroEncontrado = document.getElementById('livro-encontrado');
+const carroEncontrado = document.getElementById('carro-encontrado');
 
-// Adicionar livro
+// Adicionar carro
 formAdicionar.addEventListener('submit', (e) => {
   e.preventDefault();
-  const nome = document.getElementById('nome').value;
-  const autor = document.getElementById('autor').value;
-  const paginas = document.getElementById('paginas').value;
+  const marca = document.getElementById('marca').value;
+  const modelo = document.getElementById('modelo').value;
+  const ano = document.getElementById('ano').value;
+  const cor = document.getElementById('cor').value;
+  const preco = document.getElementById('preco').value;
 
-  fetch('http://localhost:3000/livros', {
+  fetch('http://localhost:3001/carros', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ nome, autor, paginas })
+    body: JSON.stringify({ marca, modelo, ano, cor, preco })
   })
   .then(res => res.json())
   .then(data => {
-    alert('Livro adicionado com sucesso!');
+    alert('Carro adicionado com sucesso!');
     formAdicionar.reset();
+  })
+  .catch(error => {
+    alert('Erro ao adicionar carro: ' + error);
   });
 });
 
-// Listar todos os livros
+// Listar todos os carros
 btnListar.addEventListener('click', () => {
-  fetch('http://localhost:3000/livros')
+  fetch('http://localhost:3001/carros')
   .then(res => res.json())
   .then(data => {
-    listaLivros.innerHTML = '';
-    data.forEach(livro => {
+    listaCarros.innerHTML = '';
+    data.forEach(carro => {
       const li = document.createElement('li');
-      li.textContent = `ID: ${livro.id}, Nome: ${livro.nome}, Autor: ${livro.autor}, Páginas: ${livro.paginas}`;
-      listaLivros.appendChild(li);
+      li.textContent = `ID: ${carro.id} | Marca: ${carro.marca} | Modelo: ${carro.modelo} | Ano: ${carro.ano} | Cor: ${carro.cor} | Preço: €${carro.preco}`;
+      listaCarros.appendChild(li);
     });
+  })
+  .catch(error => {
+    alert('Erro ao listar carros: ' + error);
   });
 });
 
-// Buscar livro por ID
+// Buscar carro por ID
 btnBuscar.addEventListener('click', () => {
   const id = idBuscar.value;
-  fetch(`http://localhost:3000/livros/${id}`)
+  fetch(`http://localhost:3001/carros/${id}`)
   .then(res => res.json())
   .then(data => {
     if (data.mensagem) {
-      livroEncontrado.textContent = data.mensagem;
+      carroEncontrado.textContent = data.mensagem;
     } else {
-      livroEncontrado.textContent = `ID: ${data.id}, Nome: ${data.nome}, Autor: ${data.autor}, Páginas: ${data.paginas}`;
+      carroEncontrado.textContent = `ID: ${data.id} | Marca: ${data.marca} | Modelo: ${data.modelo} | Ano: ${data.ano} | Cor: ${data.cor} | Preço: €${data.preco}`;
     }
+  })
+  .catch(error => {
+    carroEncontrado.textContent = 'Erro ao buscar carro';
   });
 });
