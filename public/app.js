@@ -52,3 +52,6 @@ btnBuscar.addEventListener('click', () => {
     }
   });
 });
+
+module.exports = app;
+
