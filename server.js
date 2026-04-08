@@ -38,6 +38,13 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 let livros = [];
 let idAtual = 1;
 
+// Reinicia os dados a cada 1 hora para evitar acúmulo em memória
+setInterval(() => {
+  livros = [];
+  idAtual = 1;
+  console.log('Dados reiniciados automaticamente (memória limpa)');
+}, 60 * 60 * 1000);
+
 /**
  * @swagger
  * components:
