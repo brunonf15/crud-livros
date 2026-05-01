@@ -1,9 +1,14 @@
 // server.js
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 const path = require('path');
+
+const db = require('./db');
+const { startCleanupJob } = require('./cleanup');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -29,21 +34,11 @@ const swaggerOptions = {
       },
     ],
   },
-  apis: ['./server.js'], // Caminho para os arquivos que contêm as anotações do Swagger
+  apis: ['./server.js'],
 };
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-
-let livros = [];
-let idAtual = 1;
-
-// Reinicia os dados a cada 1 hora para evitar acúmulo em memória
-setInterval(() => {
-  livros = [];
-  idAtual = 1;
-  console.log('Dados reiniciados automaticamente (memória limpa)');
-}, 60 * 60 * 1000);
 
 /**
  * @swagger
@@ -128,14 +123,21 @@ setInterval(() => {
  *                   type: string
  *                   example: "Todos os campos são obrigatórios"
  */
-app.post('/livros', (req, res) => {
+app.post('/livros', async (req, res) => {
   const { nome, autor, paginas } = req.body;
   if (!nome || !autor || !paginas) {
     return res.status(400).json({ mensagem: 'Todos os campos são obrigatórios' });
   }
-  const novoLivro = { id: idAtual++, nome, autor, paginas };
-  livros.push(novoLivro);
-  res.status(201).json(novoLivro);
+  try {
+    const [result] = await db.pool.query(
+      'INSERT INTO livros (nome, autor, paginas) VALUES (?, ?, ?)',
+      [nome, autor, Number(paginas)]
+    );
+    res.status(201).json({ id: result.insertId, nome, autor, paginas: Number(paginas) });
+  } catch (err) {
+    console.error('[POST /livros] erro:', err.message);
+    res.status(500).json({ mensagem: 'Erro ao criar livro' });
+  }
 });
 
 /**
@@ -154,8 +156,14 @@ app.post('/livros', (req, res) => {
  *               items:
  *                 $ref: '#/components/schemas/Livro'
  */
-app.get('/livros', (req, res) => {
-  res.json(livros);
+app.get('/livros', async (req, res) => {
+  try {
+    const [rows] = await db.pool.query('SELECT id, nome, autor, paginas FROM livros');
+    res.json(rows);
+  } catch (err) {
+    console.error('[GET /livros] erro:', err.message);
+    res.status(500).json({ mensagem: 'Erro ao listar livros' });
+  }
 });
 
 /**
@@ -189,13 +197,21 @@ app.get('/livros', (req, res) => {
  *                   type: string
  *                   example: "Livro não encontrado"
  */
-app.get('/livros/:id', (req, res) => {
+app.get('/livros/:id', async (req, res) => {
   const id = parseInt(req.params.id);
-  const livro = livros.find((l) => l.id === id);
-  if (livro) {
-    res.json(livro);
-  } else {
-    res.status(404).json({ mensagem: 'Livro não encontrado' });
+  try {
+    const [rows] = await db.pool.query(
+      'SELECT id, nome, autor, paginas FROM livros WHERE id = ? LIMIT 1',
+      [id]
+    );
+    if (rows.length > 0) {
+      res.json(rows[0]);
+    } else {
+      res.status(404).json({ mensagem: 'Livro não encontrado' });
+    }
+  } catch (err) {
+    console.error('[GET /livros/:id] erro:', err.message);
+    res.status(500).json({ mensagem: 'Erro ao buscar livro' });
   }
 });
 
@@ -247,17 +263,31 @@ app.get('/livros/:id', (req, res) => {
  *                   type: string
  *                   example: "Livro não encontrado"
  */
-app.put('/livros/:id', (req, res) => {
+app.put('/livros/:id', async (req, res) => {
   const id = parseInt(req.params.id);
   const { nome, autor, paginas } = req.body;
-  const livro = livros.find((l) => l.id === id);
-  if (livro) {
-    livro.nome = nome || livro.nome;
-    livro.autor = autor || livro.autor;
-    livro.paginas = paginas || livro.paginas;
-    res.json(livro);
-  } else {
-    res.status(404).json({ mensagem: 'Livro não encontrado' });
+  try {
+    const [rows] = await db.pool.query(
+      'SELECT id, nome, autor, paginas FROM livros WHERE id = ? LIMIT 1',
+      [id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ mensagem: 'Livro não encontrado' });
+    }
+    const atual = rows[0];
+    const novo = {
+      nome: nome || atual.nome,
+      autor: autor || atual.autor,
+      paginas: paginas != null ? Number(paginas) : atual.paginas,
+    };
+    await db.pool.query(
+      'UPDATE livros SET nome = ?, autor = ?, paginas = ? WHERE id = ?',
+      [novo.nome, novo.autor, novo.paginas, id]
+    );
+    res.json({ id, ...novo });
+  } catch (err) {
+    console.error('[PUT /livros/:id] erro:', err.message);
+    res.status(500).json({ mensagem: 'Erro ao atualizar livro' });
   }
 });
 
@@ -288,18 +318,33 @@ app.put('/livros/:id', (req, res) => {
  *                   type: string
  *                   example: "Livro não encontrado"
  */
-app.delete('/livros/:id', (req, res) => {
+app.delete('/livros/:id', async (req, res) => {
   const id = parseInt(req.params.id);
-  const indice = livros.findIndex((l) => l.id === id);
-  if (indice !== -1) {
-    livros.splice(indice, 1);
-    res.status(204).send();
-  } else {
-    res.status(404).json({ mensagem: 'Livro não encontrado' });
+  try {
+    const [result] = await db.pool.query('DELETE FROM livros WHERE id = ?', [id]);
+    if (result.affectedRows > 0) {
+      res.status(204).send();
+    } else {
+      res.status(404).json({ mensagem: 'Livro não encontrado' });
+    }
+  } catch (err) {
+    console.error('[DELETE /livros/:id] erro:', err.message);
+    res.status(500).json({ mensagem: 'Erro ao deletar livro' });
   }
 });
 
-app.listen(port, () => {
-  console.log(`Servidor rodando em http://localhost:${port}`);
-  console.log(`Documentação disponível em http://localhost:${port}/api-docs`);
-});
+async function bootstrap() {
+  try {
+    await db.init();
+    startCleanupJob();
+    app.listen(port, () => {
+      console.log(`Servidor rodando em http://localhost:${port}`);
+      console.log(`Documentação disponível em http://localhost:${port}/api-docs`);
+    });
+  } catch (err) {
+    console.error('Falha ao iniciar o servidor:', err.message);
+    process.exit(1);
+  }
+}
+
+bootstrap();
